@@ -1,0 +1,12 @@
+{
+  "name": "OpenSpace-Launcher",
+  "version": "0.1.0",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^6.0.1",
+    "electron-packager": "^14.0.4"
+  }
+}
