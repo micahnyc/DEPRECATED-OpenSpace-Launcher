@@ -3,12 +3,12 @@ A simple launcher for choosing scene and config options.
 
 Quick start
 
-`npm install -g electron
-npm install -g electron-packager
-git clone git@github.com:OpenSpace/OpenSpace-Launcher.git
-cd OpenSpace-Launcher
-npm install
-electron .`
+`npm install -g electron`
+`npm install -g electron-packager`
+`git clone git@github.com:OpenSpace/OpenSpace-Launcher.git`
+`cd OpenSpace-Launcher`
+`npm install`
+`electron .`
 
 Deploy
 
