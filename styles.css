@@ -9,6 +9,18 @@ body {
     user-select: none;
 }
 
+#cluster-options {
+  padding-top: 10px;
+}
+
+#cluster-options input {
+  margin-top: 10px;
+}
+
+#cluster-options div {
+    display: block;
+}
+
 .openspace-select {
   cursor: pointer;
   color: #ddd;

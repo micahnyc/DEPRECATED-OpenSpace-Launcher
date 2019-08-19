@@ -1,5 +1,6 @@
 const {ipcRenderer} = require('electron')
 const os = require('os')
+const fs = require('fs');
 
 const child = require('child_process').exec;
 const windowsExecutablePath = "bin\\OpenSpace.exe";
@@ -121,6 +122,19 @@ ipcRenderer.on('osdata', (event,osdata) => {
     }
     launchOpenSpace(path, asset, sgct, osdata.directoryTree);
   });
+
+  try{
+     fs.accessSync(osdata.path + osdata.directoryTree + "StartCluster.bat", fs.R_OK | fs.W_OK)
+  }catch(e){
+      document.getElementById("cluster-start").style.display = "none";
+  }
+
+  try{
+     fs.accessSync(osdata.path + osdata.directoryTree + "SyncCluster.bat", fs.R_OK | fs.W_OK)
+  }catch(e){
+      document.getElementById("cluster-sync").style.display = "none";
+  }
+
 })
 
 var launchOpenSpace = (path, asset, sgct, directoryTree, winDirectoryTree) => {
@@ -146,9 +160,40 @@ var launchOpenSpace = (path, asset, sgct, directoryTree, winDirectoryTree) => {
       executablePath += linuxExecutablePath;
       break;
   }
-  child(executablePath + parameters, function(err, data) {
-    console.log(err)
-    console.log(data.toString());
-  });
-  ipcRenderer.send("launched");
+
+  if (document.getElementById("check-cluster-sync").checked) {
+    child(path + directoryTree + "SyncCluster.bat", function(err, data) {
+      console.log(err)
+      console.log(data.toString());
+      child(executablePath + parameters, function(err, data) {
+        console.log(err)
+        console.log(data.toString());
+      });
+      if (document.getElementById("check-cluster-start").checked) {
+          child(path + directoryTree + "StartCluster.bat", function(err, data) {
+          console.log(err)
+          console.log(data.toString());
+      });
+      } else {
+        ipcRenderer.send("launched");
+      }
+    });
+  } else if (document.getElementById("check-cluster-start").checked) {
+    child(executablePath + parameters, function(err, data) {
+      console.log(err)
+      console.log(data.toString());
+    });
+    child(path + directoryTree + "StartCluster.bat", function(err, data) {
+      console.log(err)
+      console.log(data.toString());
+      ipcRenderer.send("launched");
+    });
+  } else {
+    child(executablePath + parameters, function(err, data) {
+      console.log(err)
+      console.log(data.toString());
+    });
+    ipcRenderer.send("launched");
+  }
+
 };

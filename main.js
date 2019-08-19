@@ -10,6 +10,7 @@ var config = {};
 var platform = os.platform();
 var nixDirectoryTree = "/../../../../";
 var winDirectoryTree = "\\..\\..\\..\\";
+//var winDirectoryTree = "\\..\\OpenSpace\\";
 
 switch (platform) {
   case 'win32':
@@ -28,6 +29,7 @@ function fileList(dir) {
     return list.concat(isDir ? fileList(name) : [name]);
   }, []);
 }
+
 
 function readDefaults() {
 
@@ -73,7 +75,7 @@ function readConfigs() {
 function createWindow () {
   win = new BrowserWindow({
     width: 640,
-    height: 520,
+    height: 600,
     webPreferences: {
       nodeIntegration: true
     }
