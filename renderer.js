@@ -104,7 +104,21 @@ ipcRenderer.on('osdata', (event,osdata) => {
     console.log("preselect sgct not found", osdata.sgct);
   }
 
-  const buttons = document.getElementsByTagName('button')
+  const editButton = document.getElementById('edit-profile');
+  const newButton = document.getElementById('new-profile');
+
+  editButton.addEventListener('click',(event)=>{
+    var payload = {};
+    var ss = document.getElementById("select-scene");
+    payload.profile = ss.options[ss.selectedIndex].value;
+    ipcRenderer.send("profile", payload);
+  });
+
+  newButton.addEventListener('click',(event)=>{
+    var payload = {profile: ""};
+    ipcRenderer.send("profile", payload);
+  });
+
   const osButton = document.getElementById('start-openspace');
   osButton.addEventListener('click',(event)=>{
     var ss = document.getElementById("select-scene");

@@ -5,12 +5,16 @@ const path = require('path');
 const os = require('os')
 
 let win;
+let profileWin;
 
 var config = {};
 var platform = os.platform();
-var nixDirectoryTree = "/../../../../";
-var winDirectoryTree = "\\..\\..\\..\\";
-//var winDirectoryTree = "\\..\\OpenSpace\\";
+//prod paths
+// var nixDirectoryTree = "/../../../../";
+// var winDirectoryTree = "\\..\\..\\..\\";
+//dev paths
+var nixDirectoryTree = "/../OpenSpace/";
+var winDirectoryTree = "\\..\\OpenSpace\\";
 
 switch (platform) {
   case 'win32':
@@ -22,6 +26,14 @@ switch (platform) {
     break;
 }
 
+function walkDir(dir, callback) {
+  fs.readdirSync(dir).forEach( f => {
+    let dirPath = path.join(dir, f);
+    let isDirectory = fs.statSync(dirPath).isDirectory();
+    isDirectory ? walkDir(dirPath, callback) : callback(path.join(dir, f));
+  });
+};
+
 function fileList(dir) {
   return fs.readdirSync(dir).reduce(function(list, file) {
     var name = path.join(dir, file);
@@ -30,9 +42,7 @@ function fileList(dir) {
   }, []);
 }
 
-
 function readDefaults() {
-
   const filepath = config.path + config.directoryTree + 'openspace.cfg';
   const oscfg = fs.readFileSync(filepath, 'utf8');
   var lines = oscfg.split('\n');
@@ -89,6 +99,18 @@ function createWindow () {
     readDefaults();
     readScenes();
     readConfigs();
+
+    var assets = [];
+    var sceneString = 'data/assets/scene/';
+    var assetString = ".asset";
+    walkDir(config.path + config.directoryTree + sceneString, function(filePath) {
+      if (filePath.endsWith(assetString)) {
+        filePath = filePath.substr(filePath.indexOf(sceneString) + sceneString.length);
+        filePath = filePath.slice(0, -assetString.length); // -6 for .asset
+        assets.push(filePath);
+      }
+    });
+    config.assets = assets;
     win.webContents.send('osdata', config);
   })
 
@@ -99,8 +121,40 @@ function createWindow () {
   ipcMain.on('launched',() => {
     setTimeout(function() {
       app.quit();
-    }, 1000);
+    }, 8000);
   });
+
+  ipcMain.on('profile', createProfileWindow);
+}
+
+function createProfileWindow(event, data) {
+  profileWin = new BrowserWindow({
+    width: 800,
+    height: 800,
+    webPreferences: {
+      nodeIntegration: true
+    }
+  })
+  profileWin.setMenu(null);
+  profileWin.loadFile('profile.html')
+  //profileWin.webContents.openDevTools()
+
+  profileWin.webContents.on('did-finish-load', () => {
+    var payload = {};
+    payload.assets = config.assets;
+    payload.profile = data.profile;
+    payload.path = config.path + config.directoryTree + "data/assets/";
+    profileWin.webContents.send('profileData', payload);
+  })
+
+  profileWin.on('closed', () => {
+    profileWin = null
+  })
+
+  ipcMain.on('save',(event, payload) => {
+    profileWin && profileWin.close();
+  });
+
 }
 
 app.on('ready', createWindow)

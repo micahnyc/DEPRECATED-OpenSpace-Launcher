@@ -1,0 +1,52 @@
+<!-- profile.html -->
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Edit Profile</title>
+    <link rel="stylesheet" type="text/css" href="profile.css">
+  </head>
+  <body>
+    <div id='profile-logo'><img src="logo-alpha.png" alt="OpenSpace" /><span>Profile Editor</span></div>
+
+    <div id="profile-container" class="container">
+        <div id='name-row' class="profile-row">
+            <span>Profile Name</span><br>
+            <input type="text" id="profile-name" placeholder="Enter name" />
+        </div>
+        <div id='asset-tree-row' class="profile-row">
+            <span>Select Assets</span><br>
+            <ul id="root" class="tree-node"></ul>
+        </div>
+        <div id='start-time-row' class="profile-row">
+            <span>Start Time</span><br>
+            <input type="text" id="start-time" placeholder="Enter start time (leave blank for default start time)" />
+        </div>
+        <div id='featured-nodes-row' class="profile-row">
+            <span>Featured Nodes</span>
+            <button id="add-featured-item-button">Add featured item</button>
+            <div id="featured-nodes"></div>
+        </div>
+        <div id='anchor-node-row' class="profile-row">
+            <span>Initial Anchor Node</span><br>
+            <select id="anchor-select">
+                <option disabled="true">Select Starting Node</option>
+                <option value="Root">Root</option>
+            </select>
+        </div>
+        <div id='custom-settings-row'class="profile-row">
+            <span>Customizations</span><br>
+            <textarea rows="10" cols="80" id="profile-custom-settings"></textarea>
+        </div>
+    </div>
+
+    <div class='button-container'>
+        <div id="save-profile" class="profile-button">save</div> 
+        <!-- <div>OR</div> -->
+        <!-- <div id="save-and-start" class="profile-button">save and start OpenSpace</div> -->
+    </div>
+
+    <script src="./profile.js"></script>
+
+  </body>
+</html>
