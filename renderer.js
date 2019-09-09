@@ -37,6 +37,15 @@ ipcRenderer.on('log', (event,log) => {
   console.log("MAIN:",log);
 });
 
+ipcRenderer.on('save', (event, save) => {
+  var sceneSelect = document.getElementById("select-scene");
+  var sceneOption = document.createElement('option');
+  sceneOption.value = save.profile;
+  sceneOption.innerHTML = save.profile;
+  sceneSelect.appendChild(sceneOption);
+  sceneSelect.value = save.profile;
+});
+
 ipcRenderer.on('osdata', (event,osdata) => {
 
   console.log("on os data", osdata);

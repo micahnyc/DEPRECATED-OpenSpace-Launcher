@@ -20,9 +20,11 @@ switch (platform) {
   case 'win32':
   case 'win64':
     config.directoryTree = winDirectoryTree;
+    config.deliminator = '\\';
     break;
   default:
     config.directoryTree = nixDirectoryTree;
+    config.deliminator = '/';
     break;
 }
 
@@ -63,7 +65,7 @@ function readDefaults() {
 
 function readScenes() {
   config.scenes = [];
-  const sceneFolder = config.path + config.directoryTree + 'data/assets/';
+  const sceneFolder = config.path + config.directoryTree + 'data' + config.deliminator + 'assets' + config.deliminator;
   fs.readdirSync(sceneFolder).forEach(file => {
     if (file.endsWith(".scene")) {
       var sceneName = file.split('.scene')[0];
@@ -92,7 +94,7 @@ function createWindow () {
   })
   win.setMenu(null);
   win.loadFile('index.html')
-  //win.webContents.openDevTools()
+  win.webContents.openDevTools()
 
   win.webContents.on('did-finish-load', () => {
     config.path = app.getAppPath();
@@ -101,7 +103,8 @@ function createWindow () {
     readConfigs();
 
     var assets = [];
-    var sceneString = 'data/assets/scene/';
+    var sceneString = 'data' + config.deliminator + 'assets';
+    sceneString += config.deliminator + 'scene' + config.deliminator;
     var assetString = ".asset";
     walkDir(config.path + config.directoryTree + sceneString, function(filePath) {
       if (filePath.endsWith(assetString)) {
@@ -137,13 +140,15 @@ function createProfileWindow(event, data) {
   })
   profileWin.setMenu(null);
   profileWin.loadFile('profile.html')
-  //profileWin.webContents.openDevTools()
+  profileWin.webContents.openDevTools()
 
   profileWin.webContents.on('did-finish-load', () => {
     var payload = {};
     payload.assets = config.assets;
     payload.profile = data.profile;
-    payload.path = config.path + config.directoryTree + "data/assets/";
+    payload.deliminator = config.deliminator;
+    payload.path = config.path + config.directoryTree + "data";
+    payload.path += config.deliminator + "assets" + config.deliminator;
     profileWin.webContents.send('profileData', payload);
   })
 
@@ -153,6 +158,7 @@ function createProfileWindow(event, data) {
 
   ipcMain.on('save',(event, payload) => {
     profileWin && profileWin.close();
+    win.webContents.send('save', payload);
   });
 
 }

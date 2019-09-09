@@ -24,8 +24,9 @@ var assetIdentifiers = {};
 //recieve data
 ipcRenderer.on('profileData', (event,profileData) => {
   profile.path = profileData.path;
+  profile.deliminator = profileData.deliminator;
   profileData.assets.forEach(asset => {
-    assetIdentifiers[asset] = extractIdentifiers('scene/' + asset);
+    assetIdentifiers[asset] = extractIdentifiers('scene' + profileData.deliminator + asset);
   });
   if (profileData.profile != "") {
     profile.name = profileData.profile;
@@ -150,7 +151,8 @@ function addInterestingNode(preselectValue) {
 
 function fillSelectWithNodes(select) {
   profile.selectedNodes.forEach(node => {
-    var nodeIdentifiers = assetIdentifiers[node];
+    var nodeReplace = node.replace(/\//g, profile.deliminator);
+    var nodeIdentifiers = assetIdentifiers[nodeReplace];
     nodeIdentifiers.forEach(id => {
       var idOption = document.createElement('option');
       idOption.value = id;
@@ -168,7 +170,7 @@ function updateAnchorSelect() {
 }
 
 function checkTreeBranch(branch, assetString, fullString) {
-  var assetSplit = assetString.split('/'); 
+  var assetSplit = assetString.split(profile.deliminator); 
   if (assetSplit.length == 1) {
     if (Object.prototype.toString.call(branch) === '[object Array]') {
       branch.push(fullString);
@@ -181,12 +183,12 @@ function checkTreeBranch(branch, assetString, fullString) {
     if (branch[assetSplit[0]] == undefined) {
       branch[assetSplit[0]] = [];
     }
-    checkTreeBranch(branch[assetSplit[0]], assetString.substring(assetString.indexOf('/') + 1), fullString);
+    checkTreeBranch(branch[assetSplit[0]], assetString.substring(assetString.indexOf(profile.deliminator) + 1), fullString);
   } else {
     if (branch[assetSplit[0]] == undefined) {
       branch[assetSplit[0]] = {};
     }
-    checkTreeBranch(branch[assetSplit[0]], assetString.substring(assetString.indexOf('/') + 1), fullString);
+    checkTreeBranch(branch[assetSplit[0]], assetString.substring(assetString.indexOf(profile.deliminator) + 1), fullString);
   }
 }
 
@@ -201,13 +203,13 @@ function populateBranch(branch, list) {
   Object.keys(branch).forEach(function (leaf) {
     if (typeof(branch[leaf]) == "string") {
       var newLeaf = document.createElement('li');
-      var leafParts = branch[leaf].split("/");
+      var leafParts = branch[leaf].split(profile.deliminator);
       var branchName = leafParts[leafParts.length-1];
       var branchText = document.createTextNode(branchName);
       var branchCheck = document.createElement("INPUT");
       branchCheck.setAttribute("type", "checkbox");
       branchCheck.setAttribute("id", branch[leaf]);
-      branchCheck.checked = profile.selectedNodes.includes(branch[leaf]);
+      branchCheck.checked = profile.selectedNodes.includes(branch[leaf].replace(/\\/g,"/"));
       branchCheck.addEventListener( 'change', function(event) {
         if(this.checked) {
           profile.selectedNodes.push(this.id);
@@ -249,7 +251,7 @@ function createBranch(leaf, branch, list) {
   children.forEach(function (branchleaf) {
     if (typeof(branch[leaf][branchleaf]) === "string") {
       ++stringChildren;
-      if (profile.selectedNodes.includes(branch[leaf][branchleaf])) {
+      if (profile.selectedNodes.includes(branch[leaf][branchleaf].replace(/\\/g,"/"))) {
         ++selectedChildCount;
       }
     }
@@ -317,7 +319,7 @@ function saveScene(launchAfterSave) {
     fileText += "asset.require('./base_profile')\n";
     //add selected assets
     for (var i = 0; i < profile.selectedNodes.length; ++i) {
-        fileText += "asset.require('scene/" + profile.selectedNodes[i] + "')\n";
+        fileText += "asset.require('scene/" + profile.selectedNodes[i].replace(/\\/g,"/") + "')\n";
     }
     //initalize
     fileText += "asset.onInitialize(function ()\n";
