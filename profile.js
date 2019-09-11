@@ -21,18 +21,20 @@ var profile = {
 
 var tree = {};
 var assetIdentifiers = {};
+var assetList = [];
 //recieve data
 ipcRenderer.on('profileData', (event,profileData) => {
   profile.path = profileData.path;
   profile.deliminator = profileData.deliminator;
-  profileData.assets.forEach(asset => {
-    assetIdentifiers[asset] = extractIdentifiers('scene' + profileData.deliminator + asset);
+  assetList = profileData.assets;
+  assetList.forEach(asset => {
+    assetIdentifiers[asset.replace(/\\/g,"/")] = extractIdentifiers('scene' + profileData.deliminator + asset);
   });
   if (profileData.profile != "") {
     profile.name = profileData.profile;
     readProfile();
   }
-  buildTree(profileData);
+  buildTree();
   populateTree();
 });
 
@@ -117,6 +119,7 @@ function readProfile() {
       profile.anchorNode = line.substring(anchorStartIndex,anchorEndIdnex);
     }
   }
+
   //fill html
   document.getElementById("profile-name").value = profile.name;
   document.getElementById("start-time").value = profile.startTime;
@@ -144,21 +147,24 @@ function addInterestingNode(preselectValue) {
       event.currentTarget.remove();
     }
   });
-
   var container = document.getElementById('featured-nodes');
   container.appendChild(iSelect);
 }
 
 function fillSelectWithNodes(select) {
+  var sortedNodes = [];
   profile.selectedNodes.forEach(node => {
-    var nodeReplace = node.replace(/\//g, profile.deliminator);
-    var nodeIdentifiers = assetIdentifiers[nodeReplace];
+    var nodeIdentifiers = assetIdentifiers[node];
     nodeIdentifiers.forEach(id => {
-      var idOption = document.createElement('option');
-      idOption.value = id;
-      idOption.innerHTML = id;
-      select.appendChild(idOption);
+      sortedNodes.push(id);
     });
+  });
+  sortedNodes = sortedNodes.sort();
+  sortedNodes.forEach(node => {
+    var idOption = document.createElement('option');
+    idOption.value = node;
+    idOption.innerHTML = node;
+    select.appendChild(idOption);
   });
 }
 
@@ -170,7 +176,7 @@ function updateAnchorSelect() {
 }
 
 function checkTreeBranch(branch, assetString, fullString) {
-  var assetSplit = assetString.split(profile.deliminator); 
+  var assetSplit = assetString.split("/"); 
   if (assetSplit.length == 1) {
     if (Object.prototype.toString.call(branch) === '[object Array]') {
       branch.push(fullString);
@@ -183,33 +189,32 @@ function checkTreeBranch(branch, assetString, fullString) {
     if (branch[assetSplit[0]] == undefined) {
       branch[assetSplit[0]] = [];
     }
-    checkTreeBranch(branch[assetSplit[0]], assetString.substring(assetString.indexOf(profile.deliminator) + 1), fullString);
+    checkTreeBranch(branch[assetSplit[0]], assetString.substring(assetString.indexOf("/") + 1), fullString);
   } else {
     if (branch[assetSplit[0]] == undefined) {
       branch[assetSplit[0]] = {};
     }
-    checkTreeBranch(branch[assetSplit[0]], assetString.substring(assetString.indexOf(profile.deliminator) + 1), fullString);
+    checkTreeBranch(branch[assetSplit[0]], assetString.substring(assetString.indexOf("/") + 1), fullString);
   }
 }
 
 function buildTree(profileData) {
-  var assetList = profileData.assets;
   assetList.forEach(asset => {
-    checkTreeBranch(tree, asset, asset);
+    checkTreeBranch(tree, asset.replace(/\\/g,"/"), asset.replace(/\\/g,"/"));
   });
 }
 
-function populateBranch(branch, list) {
+function populateBranch(branch, list, parentBranch) {
   Object.keys(branch).forEach(function (leaf) {
     if (typeof(branch[leaf]) == "string") {
       var newLeaf = document.createElement('li');
-      var leafParts = branch[leaf].split(profile.deliminator);
+      var leafParts = branch[leaf].split("/");
       var branchName = leafParts[leafParts.length-1];
       var branchText = document.createTextNode(branchName);
       var branchCheck = document.createElement("INPUT");
       branchCheck.setAttribute("type", "checkbox");
       branchCheck.setAttribute("id", branch[leaf]);
-      branchCheck.checked = profile.selectedNodes.includes(branch[leaf].replace(/\\/g,"/"));
+      branchCheck.checked = profile.selectedNodes.includes(branch[leaf]);
       branchCheck.addEventListener( 'change', function(event) {
         if(this.checked) {
           profile.selectedNodes.push(this.id);
@@ -217,6 +222,8 @@ function populateBranch(branch, list) {
           profile.selectedNodes = profile.selectedNodes.filter(v => v !== this.id); 
         }
         updateAnchorSelect();
+        var checkBox = list.parentNode.firstChild.lastChild;
+        updateHeaderCheckBox(parentBranch, leafParts[leafParts.length-2], checkBox);
       });
       newLeaf.appendChild(branchText);
       newLeaf.appendChild(branchCheck);
@@ -227,6 +234,31 @@ function populateBranch(branch, list) {
   });
 }
 
+function updateHeaderCheckBox(branch, leaf, selectAll) {
+  var stringChildren = 0;
+  var selectedChildCount = 0;
+  var children = Object.keys(branch[leaf]);
+  children.forEach(function (branchleaf) {
+    if (typeof(branch[leaf][branchleaf]) === "string") {
+      ++stringChildren;
+      if (profile.selectedNodes.includes(branch[leaf][branchleaf])) {
+        ++selectedChildCount;
+      }
+    }
+  });
+
+  selectAll.indeterminate = false;
+  selectAll.checked = false;
+  if (selectedChildCount == children.length) {
+    selectAll.checked = true;
+  } else if (selectedChildCount > 0) {
+    selectAll.indeterminate = true;
+  }
+
+  return stringChildren == children.length;
+}
+
+
 function createBranch(leaf, branch, list) {
   var newBranch = document.createElement('li');
   var branchHeader = document.createElement("div");
@@ -235,7 +267,7 @@ function createBranch(leaf, branch, list) {
   expandButton.innerHTML = "+";
   expandButton.addEventListener('click',(event)=>{
       if (newLeaf.childElementCount == 0) {
-        populateBranch(branch[leaf], newLeaf)  
+        populateBranch(branch[leaf], newLeaf, branch)  
         expandButton.innerHTML = "-";
       } else {
         newLeaf.innerHTML = "";
@@ -245,33 +277,21 @@ function createBranch(leaf, branch, list) {
   branchHeader.appendChild(expandButton);
   branchHeader.appendChild(headerName);
 
-  var stringChildren = 0;
-  var selectedChildCount = 0;
-  var children = Object.keys(branch[leaf]);
-  children.forEach(function (branchleaf) {
-    if (typeof(branch[leaf][branchleaf]) === "string") {
-      ++stringChildren;
-      if (profile.selectedNodes.includes(branch[leaf][branchleaf].replace(/\\/g,"/"))) {
-        ++selectedChildCount;
-      }
-    }
-  });
-
   var selectAll = document.createElement("INPUT");
   selectAll.setAttribute("type", "checkbox");
   selectAll.setAttribute("id", branch[leaf]);
-  selectAll.checked = false;
-  if (selectedChildCount == children.length) {
-    selectAll.checked = true;
-  } else if (selectedChildCount > 0) {
-    selectAll.indeterminate = true;
-  }
-  if (stringChildren == children.length) {
+  var allStrings = updateHeaderCheckBox(branch, leaf, selectAll);
+
+  if (allStrings) {
     selectAll.addEventListener('click',(event)=>{
       if (event.target.checked) {
         updateSelectedNodes(event.target.id, true);
       } else {
         updateSelectedNodes(event.target.id, false);
+      }
+      newLeaf.innerHTML = "";
+      if(branchHeader.firstChild.innerHTML == "-") {
+        populateBranch(branch[leaf], newLeaf, branch);        
       }
     });
     branchHeader.appendChild(selectAll);
@@ -319,7 +339,7 @@ function saveScene(launchAfterSave) {
     fileText += "asset.require('./base_profile')\n";
     //add selected assets
     for (var i = 0; i < profile.selectedNodes.length; ++i) {
-        fileText += "asset.require('scene/" + profile.selectedNodes[i].replace(/\\/g,"/") + "')\n";
+        fileText += "asset.require('scene/" + profile.selectedNodes[i] + "')\n";
     }
     //initalize
     fileText += "asset.onInitialize(function ()\n";
@@ -352,7 +372,6 @@ function saveScene(launchAfterSave) {
     fileText += "\n";
     fileText += customizationsComment + "\n";
     fileText += document.getElementById("profile-custom-settings").value;
-    fileText += "\n";
     fileText += customizationsComment + "end\n";
     fileText += "end)\n\n";
     //deinit

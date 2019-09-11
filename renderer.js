@@ -18,7 +18,9 @@ var sgctMap = {
   // window_choosefile: {title: "Choose File", command: ""},
 }
 
-var sceneMap = {
+var DividerText = "----------custom profiles";
+
+var defaultSceneMap = {
   default: "Default",
   default_full: "Default (Full)",
   apollo8: " Apollo 8",
@@ -30,7 +32,18 @@ var sceneMap = {
   newhorizons: "New Horizons",
   osirisrex: "Osiris Rex",
   rosetta: "Rosetta",
-  voyager: "Voyager"
+  voyager: "Voyager",
+  dawn: "Dawn",
+  satellites: "Satellites",
+  spaceDebris: "Space Debris",
+  openspacedivider: DividerText
+}
+
+var sceneMap = {};
+var editButton = undefined;
+
+for (scene in defaultSceneMap)  {
+  sceneMap[scene] = defaultSceneMap[scene];
 }
 
 ipcRenderer.on('log', (event,log) => {
@@ -39,16 +52,20 @@ ipcRenderer.on('log', (event,log) => {
 
 ipcRenderer.on('save', (event, save) => {
   var sceneSelect = document.getElementById("select-scene");
-  var sceneOption = document.createElement('option');
-  sceneOption.value = save.profile;
-  sceneOption.innerHTML = save.profile;
-  sceneSelect.appendChild(sceneOption);
+  if (!sceneMap[save.profile]) {
+    var sceneOption = document.createElement('option');
+    sceneOption.value = save.profile;
+    sceneOption.innerHTML = save.profile;
+    sceneSelect.appendChild(sceneOption);
+  }
   sceneSelect.value = save.profile;
+  editButton.disabled = false;
 });
 
 ipcRenderer.on('osdata', (event,osdata) => {
 
   console.log("on os data", osdata);
+  editButton = document.getElementById('edit-profile');
 
   var path = osdata.path;
   var scenes = osdata.scenes;
@@ -56,7 +73,7 @@ ipcRenderer.on('osdata', (event,osdata) => {
   osdata.sgct = osdata.sgct.replace(/"/g,"'");
   //combine loaded .scene files
   scenes.forEach(scene => {
-    if ( (!sceneMap[scene]) && (scene != "base") ) {
+    if ( (!sceneMap[scene]) ) {
       sceneMap[scene] = scene;
     }
   });
@@ -72,9 +89,16 @@ ipcRenderer.on('osdata', (event,osdata) => {
     var sceneOption = document.createElement('option');
     sceneOption.value = scene;
     sceneOption.innerHTML = sceneMap[scene];
+    if (sceneMap[scene] == DividerText) {
+      sceneOption.disabled = true;
+    }
     sceneSelect.appendChild(sceneOption);
   });
   sceneSelect.value = osdata.asset;
+  updateEditButton(osdata.asset);
+  sceneSelect.addEventListener('change', (event) => {
+    updateEditButton(sceneSelect.value);
+  });
 
   var existingOption = false;
   var preselectOption;
@@ -82,8 +106,6 @@ ipcRenderer.on('osdata', (event,osdata) => {
 
   Object.keys(sgctMap).forEach(sgctconfig => {
     var sgctOption = sgctMap[sgctconfig];
-
-
     if (sgctOption.command.replace(/\s+/g, '') == osdata.sgct) {
       existingOption = true;
       osdata.sgctconfig = sgctconfig;
@@ -113,7 +135,6 @@ ipcRenderer.on('osdata', (event,osdata) => {
     console.log("preselect sgct not found", osdata.sgct);
   }
 
-  const editButton = document.getElementById('edit-profile');
   const newButton = document.getElementById('new-profile');
 
   editButton.addEventListener('click',(event)=>{
@@ -159,6 +180,14 @@ ipcRenderer.on('osdata', (event,osdata) => {
   }
 
 })
+
+var updateEditButton = (asset) => {
+  if (defaultSceneMap[asset]) {
+    editButton.disabled = true;
+  } else {
+    editButton.disabled = false;
+  }
+};
 
 var launchOpenSpace = (path, asset, sgct, directoryTree, winDirectoryTree) => {
   console.log("launch", path, asset, sgct);

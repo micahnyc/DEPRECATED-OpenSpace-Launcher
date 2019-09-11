@@ -94,7 +94,7 @@ function createWindow () {
   })
   win.setMenu(null);
   win.loadFile('index.html')
-  win.webContents.openDevTools()
+  // win.webContents.openDevTools()
 
   win.webContents.on('did-finish-load', () => {
     config.path = app.getAppPath();
@@ -128,6 +128,12 @@ function createWindow () {
   });
 
   ipcMain.on('profile', createProfileWindow);
+
+  ipcMain.on('save',(event, payload) => {
+    profileWin && profileWin.close();
+    win && win.webContents.send('save', payload);
+  });
+
 }
 
 function createProfileWindow(event, data) {
@@ -140,7 +146,7 @@ function createProfileWindow(event, data) {
   })
   profileWin.setMenu(null);
   profileWin.loadFile('profile.html')
-  profileWin.webContents.openDevTools()
+  // profileWin.webContents.openDevTools()
 
   profileWin.webContents.on('did-finish-load', () => {
     var payload = {};
@@ -155,11 +161,6 @@ function createProfileWindow(event, data) {
   profileWin.on('closed', () => {
     profileWin = null
   })
-
-  ipcMain.on('save',(event, payload) => {
-    profileWin && profileWin.close();
-    win.webContents.send('save', payload);
-  });
 
 }
 
