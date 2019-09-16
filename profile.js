@@ -40,13 +40,18 @@ ipcRenderer.on('profileData', (event,profileData) => {
 
 //actions
 const saveButton = document.getElementById('save-profile');
-saveButton.addEventListener('click',(event)=>{
+saveButton.addEventListener('click',(event) => {
     saveScene(false);
 });
 
-const addButton = document.getElementById('add-featured-item-button');
-addButton.addEventListener('click',(event)=>{
-    addInterestingNode();
+// const addButton = document.getElementById('add-featured-item-button');
+// addButton.addEventListener('click',(event) => {
+//     addInterestingNode();
+// });
+
+const anchorInput = document.getElementById("anchor-node-input");
+anchorInput.addEventListener('keyup', (event) => {
+  var input = event.target;
 });
 
 function extractIdentifiers(path) {
@@ -103,10 +108,10 @@ function readProfile() {
     if (line.indexOf(InterestingStartLua) > -1) {
       var iStartIndex = line.indexOf(InterestingStartLua);
       iStartIndex += InterestingStartLua.length;
-      var iEndIdnex = line.indexOf('}',iStartIndex + 1);
-      var nodes = line.substring(iStartIndex,iEndIdnex).split(',');
+      var iEndIndex = line.indexOf('}',iStartIndex + 1);
+      var nodes = line.substring(iStartIndex,iEndIndex).split(',');
       nodes.forEach(node => {
-        node = node.replace(/['"]+/g, '');
+        node = node.replace(/['"]+/g, '').trim();
         profile.interestingNodes.push(node);
         addInterestingNode(node);
       });
@@ -128,28 +133,37 @@ function readProfile() {
 }
 
 function addInterestingNode(preselectValue) {
-  const iSelect = document.createElement("SELECT");
-  fillSelectWithNodes(iSelect);
-  if (preselectValue != undefined) {
-    iSelect.value = preselectValue;
+  var featuredInput = document.getElementById("featured-nodes-input");
+  if (featuredInput.value == "") {
+    featuredInput.value = preselectValue
+  } else {
+    featuredInput.value += ", " + preselectValue;
   }
-  
-  var divider = document.createElement('option');
-  divider.disabled = true;
-  divider.innerHTML = "---"
-  iSelect.appendChild(divider);
-
-  var remove = document.createElement('option');
-  remove.innerHTML = "REMOVE"
-  iSelect.appendChild(remove);
-  iSelect.addEventListener('change', (event) => {
-    if (event.currentTarget.value == "REMOVE") {
-      event.currentTarget.remove();
-    }
-  });
-  var container = document.getElementById('featured-nodes');
-  container.appendChild(iSelect);
 }
+
+// function addInterestingNode(preselectValue) {
+//   const iSelect = document.createElement("SELECT");
+//   fillSelectWithNodes(iSelect);
+//   if (preselectValue != undefined) {
+//     iSelect.value = preselectValue;
+//   }
+  
+//   var divider = document.createElement('option');
+//   divider.disabled = true;
+//   divider.innerHTML = "---"
+//   iSelect.appendChild(divider);
+
+//   var remove = document.createElement('option');
+//   remove.innerHTML = "REMOVE"
+//   iSelect.appendChild(remove);
+//   iSelect.addEventListener('change', (event) => {
+//     if (event.currentTarget.value == "REMOVE") {
+//       event.currentTarget.remove();
+//     }
+//   });
+//   var container = document.getElementById('featured-nodes');
+//   container.appendChild(iSelect);
+// }
 
 function fillSelectWithNodes(select) {
   var sortedNodes = [];
@@ -169,10 +183,12 @@ function fillSelectWithNodes(select) {
 }
 
 function updateAnchorSelect() {
-  var anchorSelect = document.getElementById("anchor-select");
-  anchorSelect.innerHTML = "";
-  fillSelectWithNodes(anchorSelect);
-  anchorSelect.value = profile.anchorNode;
+  // var anchorSelect = document.getElementById("anchor-select");
+  // anchorSelect.innerHTML = "";
+  // fillSelectWithNodes(anchorSelect);
+  // anchorSelect.value = profile.anchorNode;
+  var anchorInput = document.getElementById("anchor-node-input");
+  anchorInput.value = profile.anchorNode;
 }
 
 function checkTreeBranch(branch, assetString, fullString) {
@@ -221,7 +237,6 @@ function populateBranch(branch, list, parentBranch) {
         } else {
           profile.selectedNodes = profile.selectedNodes.filter(v => v !== this.id); 
         }
-        updateAnchorSelect();
         var checkBox = list.parentNode.firstChild.lastChild;
         updateHeaderCheckBox(parentBranch, leafParts[leafParts.length-2], checkBox);
       });
@@ -319,7 +334,6 @@ function updateSelectedNodes(nodeList, addToSelection) {
       }
     }
   }
-  updateAnchorSelect();
 }
 
 function populateTree() {
@@ -329,7 +343,30 @@ function populateTree() {
   });
 }
 
+function validateForm() {
+
+  var anchorInput = document.getElementById("anchor-node-input");
+  var anchorFound = false;
+  var availableNodes = [];
+
+  profile.selectedNodes.forEach(node => {
+    var nodeIdentifiers = assetIdentifiers[node];
+    nodeIdentifiers.forEach(id => {
+      availableNodes.push(id);
+      if (id == anchorInput.value) {
+        anchorFound = true;
+      }
+    });
+  });
+  //todo try this out
+  return true;
+}
+
 function saveScene(launchAfterSave) {
+
+    if (!validateForm()) {
+      return;
+    }
     var fileText = "";
     if (profile.name == "") {
         profile.name = document.getElementById("profile-name").value;
@@ -353,19 +390,25 @@ function saveScene(launchAfterSave) {
     }
     //add interesting nodes
     fileText += "\t" + InterestingStartLua;
-    var nodes = document.getElementById('featured-nodes').children;
-    for (var i = 0; i < nodes.length; i++) {
-      var select = nodes[i];
-      if (i != 0) {
-        fileText += ',';
-      }
-      fileText += '"' + select.value + '"';
-    }
+    // var nodes = document.getElementById('featured-nodes').children;
+    // for (var i = 0; i < nodes.length; i++) {
+    //   var select = nodes[i];
+    //   if (i != 0) {
+    //     fileText += ',';
+    //   }
+    //   fileText += '"' + select.value + '"';
+    // }
+    var featuredInput = document.getElementById("featured-nodes-input");
+    featuredInput.value.split(",").forEach((node) => {
+      fileText += "\""+node.trim()+"\","
+    });
+    //remove last ,
+    fileText = fileText.substring(0, fileText.length - 1);
     fileText += "})" + "\n";
     //set start anchor
-    var anchorSelect = document.getElementById("anchor-select");
+    var anchorInput = document.getElementById("anchor-node-input");
     fileText += "\t" + "openspace.navigation.setNavigationState({" + "\n";
-    fileText += "\t\t" + AnchorStartLua + anchorSelect.value + '",' + "\n";
+    fileText += "\t\t" + AnchorStartLua + anchorInput.value + '",' + "\n";
     fileText += "\t\t" + "Position = { 526781518487.171326, 257168309890.072144, -1381125204152.817383 }," + "\n";
     fileText += "\t" + "})" + "\n";
     //custom settings
@@ -377,14 +420,12 @@ function saveScene(launchAfterSave) {
     //deinit
     fileText += "asset.onDeinitialize(function ()\n";
     fileText += "\topenspace.removeInterestingNodes({";
-    var nodes = document.getElementById('featured-nodes').children;
-    for (var i = 0; i < nodes.length; i++) {
-      var select = nodes[i];
-      if (i != 0) {
-        fileText += ',';
-      }
-      fileText += '"' + select.value + '"';
-    }
+    var featuredInput = document.getElementById("featured-nodes-input");
+    featuredInput.value.split(",").forEach((node) => {
+      fileText += "\""+node.trim()+"\","
+    });
+    //remove last ,
+    fileText = fileText.substring(0, fileText.length - 1);
     fileText += "})" + "\n";
     fileText += "\t " + "\n";
     fileText += "end)\n\n";

@@ -189,23 +189,21 @@ var updateEditButton = (asset) => {
   }
 };
 
-var generateLaunchScript = (directoryPath, executable) => {
+var generateLaunchScript = (directoryPath, executable, parameters) => {
   var platform = os.platform();
   var filepath = "";
   if (os.platform().startsWith('win')) {
     filepath = directoryPath + "startOpenSpace.bat";
-    var fileText = "start /D" + directoryPath + " " + directoryPath + executable;
+    var fileText = "start /D" + directoryPath + " " + directoryPath + executable + parameters;
     fs.writeFileSync(filepath, fileText);
   } else {
-    filename = "startOpenSpace.sh";
-    var fileText = directoryPath + executable + " &";
-    fs.writeFileSync(filepath, fileText);
+    return directoryPath + executable + parameters;
   }
   return filepath;
 };
 
-var launchExe = (directoryPath, executable) => {
-  var script = generateLaunchScript(directoryPath, executable);
+var launchExe = (directoryPath, executable, parameters) => {
+  var script = generateLaunchScript(directoryPath, executable, parameters);
   child(script, function(err, data) {
         console.log(err)
         console.log(data.toString());
@@ -241,7 +239,7 @@ var launchOpenSpace = (path, asset, sgct, directoryTree, winDirectoryTree) => {
     child(path + directoryTree + "SyncCluster.bat", function(err, data) {
       console.log(err)
       console.log(data.toString());
-      launchExe(directoryPath, executablePath + parameters);
+      launchExe(directoryPath, executablePath, parameters);
       if (document.getElementById("check-cluster-start").checked) {
           child(path + directoryTree + "StartCluster.bat", function(err, data) {
           console.log(err)
@@ -252,14 +250,14 @@ var launchOpenSpace = (path, asset, sgct, directoryTree, winDirectoryTree) => {
       }
     });
   } else if (document.getElementById("check-cluster-start").checked) {
-    launchExe(directoryPath, executablePath + parameters);
+    launchExe(directoryPath, executablePath, parameters);
     child(path + directoryTree + "StartCluster.bat", function(err, data) {
       console.log(err)
       console.log(data.toString());
       ipcRenderer.send("launched");
     });
   } else {
-    launchExe(directoryPath, executablePath + parameters);
+    launchExe(directoryPath, executablePath, parameters);
     ipcRenderer.send("launched");
   }
 

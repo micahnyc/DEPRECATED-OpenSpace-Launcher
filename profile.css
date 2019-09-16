@@ -40,6 +40,10 @@ ul, li {
     width: 80%;
 }
 
+#featured-nodes-row input {
+    width: 80%;
+}
+
 #custom-settings-row input {
     width: 500px;
     height: 200px;

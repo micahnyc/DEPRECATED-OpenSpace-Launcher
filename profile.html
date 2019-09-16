@@ -24,15 +24,16 @@
         </div>
         <div id='featured-nodes-row' class="profile-row">
             <span>Featured Nodes</span>
-            <button id="add-featured-item-button">Add featured item</button>
-            <div id="featured-nodes"></div>
+            <!-- <button id="add-featured-item-button">Add featured item</button> -->
+            <!-- <div id="featured-nodes"> -->
+            <input type="text" id="featured-nodes-input" placeholder="Comma seperated list, i.e.: Moon, Earth, Sun, Mars"/>
+            <!-- </div> -->
         </div>
         <div id='anchor-node-row' class="profile-row">
             <span>Initial Anchor Node</span><br>
-            <select id="anchor-select">
-                <option disabled="true">Select Starting Node</option>
-                <option value="Root">Root</option>
-            </select>
+            <input type="text" id="anchor-node-input" placeholder="i.e Earth or Sun" list="anchor-node-data-list" />
+            <datalist id="anchor-node-data-list"></datalist>
+
         </div>
         <div id='custom-settings-row'class="profile-row">
             <span>Customizations</span><br>
