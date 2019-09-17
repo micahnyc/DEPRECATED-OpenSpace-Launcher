@@ -3,7 +3,7 @@ const {ipcRenderer} = require('electron')
 const os = require('os')
 const fs = require('fs');
 
-const customizationsComment = "--customizations";
+var customizationsComment = "--customizations";
 const NowLua = "local now = openspace.time.currentWallTime()"
 const DefaultStartTimeLua = "openspace.time.advancedTime(now, '-1d')"
 const SetTimeLua = "openspace.time.setTime('";
@@ -96,14 +96,16 @@ function readProfile() {
         profile.startTime = time;
       }
     }
+
     //read customizations
-    if (line == customizationsComment) {
-      readingCustomizations = true;
-    } else if (line == customizationsComment + "end") {
+    if (line.indexOf(customizationsComment + "end") == 0) {
       readingCustomizations = false;
+    } else if (line.indexOf(customizationsComment) == 0)  {
+      readingCustomizations = true;
     } else if (readingCustomizations) {
       profile.customizations += line + "\n";
     }
+
     //read interesting
     if (line.indexOf(InterestingStartLua) > -1) {
       var iStartIndex = line.indexOf(InterestingStartLua);
@@ -345,19 +347,19 @@ function populateTree() {
 
 function validateForm() {
 
-  var anchorInput = document.getElementById("anchor-node-input");
-  var anchorFound = false;
-  var availableNodes = [];
+  // var anchorInput = document.getElementById("anchor-node-input");
+  // var anchorFound = false;
+  // var availableNodes = [];
 
-  profile.selectedNodes.forEach(node => {
-    var nodeIdentifiers = assetIdentifiers[node];
-    nodeIdentifiers.forEach(id => {
-      availableNodes.push(id);
-      if (id == anchorInput.value) {
-        anchorFound = true;
-      }
-    });
-  });
+  // profile.selectedNodes.forEach(node => {
+  //   var nodeIdentifiers = assetIdentifiers[node];
+  //   nodeIdentifiers.forEach(id => {
+  //     availableNodes.push(id);
+  //     if (id == anchorInput.value) {
+  //       anchorFound = true;
+  //     }
+  //   });
+  // });
   //todo try this out
   return true;
 }
@@ -407,10 +409,12 @@ function saveScene(launchAfterSave) {
     fileText += "})" + "\n";
     //set start anchor
     var anchorInput = document.getElementById("anchor-node-input");
-    fileText += "\t" + "openspace.navigation.setNavigationState({" + "\n";
-    fileText += "\t\t" + AnchorStartLua + anchorInput.value + '",' + "\n";
-    fileText += "\t\t" + "Position = { 526781518487.171326, 257168309890.072144, -1381125204152.817383 }," + "\n";
-    fileText += "\t" + "})" + "\n";
+    if (anchorInput.value != "") {
+      fileText += "\t" + "openspace.navigation.setNavigationState({" + "\n";
+      fileText += "\t\t" + AnchorStartLua + anchorInput.value + '",' + "\n";
+      fileText += "\t\t" + "Position = { 526781518487.171326, 257168309890.072144, -1381125204152.817383 }," + "\n";
+      fileText += "\t" + "})" + "\n";
+    }
     //custom settings
     fileText += "\n";
     fileText += customizationsComment + "\n";
