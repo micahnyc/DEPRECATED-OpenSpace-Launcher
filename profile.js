@@ -4,8 +4,8 @@ const os = require('os')
 const fs = require('fs');
 
 var customizationsComment = "--customizations";
-const NowLua = "local now = openspace.time.currentWallTime()"
-const DefaultStartTimeLua = "openspace.time.advancedTime(now, '-1d')"
+const NowLua = "local now = openspace.time.currentWallTime()";
+const DefaultStartTimeLua = "openspace.time.setTime(openspace.time.advancedTime(now, '-1d'))";
 const SetTimeLua = "openspace.time.setTime('";
 const AnchorStartLua = 'Anchor = "';
 const InterestingStartLua = 'openspace.markInterestingNodes({';
