@@ -102,17 +102,24 @@ function createWindow () {
     readScenes();
     readConfigs();
 
+    var baseString = 'data' + config.deliminator + 'assets' + config.deliminator;
+    var paths = ['scene','global','customization', 'examples'];
     var assets = [];
-    var sceneString = 'data' + config.deliminator + 'assets';
-    sceneString += config.deliminator + 'scene' + config.deliminator;
     var assetString = ".asset";
-    walkDir(config.path + config.directoryTree + sceneString, function(filePath) {
-      if (filePath.endsWith(assetString)) {
-        filePath = filePath.substr(filePath.indexOf(sceneString) + sceneString.length);
-        filePath = filePath.slice(0, -assetString.length); // -6 for .asset
-        assets.push(filePath);
-      }
-    });
+
+    for (var i = 0; i < paths.length; ++i) {
+      var path = paths[i];
+      var dirPath = config.path + config.directoryTree + baseString + path + config.deliminator;
+      walkDir(dirPath, function(filePath) {
+        if (filePath.endsWith(assetString)) {
+          filePath = filePath.substr(filePath.indexOf(path));
+          filePath = filePath.slice(0, -assetString.length); // -6 for .asset
+          console.log("adding ", filePath);
+          assets.push(filePath);
+        }
+      });
+    }
+
     config.assets = assets;
     win.webContents.send('osdata', config);
   })

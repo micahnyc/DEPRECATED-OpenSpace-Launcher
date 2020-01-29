@@ -22,13 +22,14 @@ var profile = {
 var tree = {};
 var assetIdentifiers = {};
 var assetList = [];
+
 //recieve data
 ipcRenderer.on('profileData', (event,profileData) => {
   profile.path = profileData.path;
   profile.deliminator = profileData.deliminator;
   assetList = profileData.assets;
   assetList.forEach(asset => {
-    assetIdentifiers[asset.replace(/\\/g,"/")] = extractIdentifiers('scene' + profileData.deliminator + asset);
+    assetIdentifiers[asset.replace(/\\/g,"/")] = extractIdentifiers(asset);
   });
   if (profileData.profile != "") {
     profile.name = profileData.profile;
@@ -82,7 +83,7 @@ function readProfile() {
     var line = lines[i];
     //read custom assets
     if (line.startsWith('asset.require(') && (!line.endsWith('base_profile\')'))) {
-      var start = "asset.require('scene/";
+      var start = "asset.require('";
       var end = "')";
       var asset = line.substring(start.length,line.indexOf(end));
       profile.selectedNodes.push(asset);
@@ -378,7 +379,7 @@ function saveScene(launchAfterSave) {
     fileText += "asset.require('./base_profile')\n";
     //add selected assets
     for (var i = 0; i < profile.selectedNodes.length; ++i) {
-        fileText += "asset.require('scene/" + profile.selectedNodes[i] + "')\n";
+        fileText += "asset.require('" + profile.selectedNodes[i] + "')\n";
     }
     //initalize
     fileText += "asset.onInitialize(function ()\n";

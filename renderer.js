@@ -34,8 +34,7 @@ var defaultSceneMap = {
   rosetta: "Rosetta",
   voyager: "Voyager",
   dawn: "Dawn",
-  satellites: "Satellites",
-  spaceDebris: "Space Debris",
+  touch: "Touch",
   openspacedivider: DividerText
 }
 
