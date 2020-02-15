@@ -10,11 +10,11 @@ let profileWin;
 var config = {};
 var platform = os.platform();
 //prod paths
-// var nixDirectoryTree = "/../../../../";
-// var winDirectoryTree = "\\..\\..\\..\\";
+var nixDirectoryTree = "/../../../../";
+var winDirectoryTree = "\\..\\..\\..\\";
 //dev paths
-var nixDirectoryTree = "/../OpenSpace/";
-var winDirectoryTree = "\\..\\OpenSpace\\";
+//var nixDirectoryTree = "/../OpenSpace/";
+//var winDirectoryTree = "\\..\\OpenSpace\\";
 
 switch (platform) {
   case 'win32':
@@ -114,7 +114,6 @@ function createWindow () {
         if (filePath.endsWith(assetString)) {
           filePath = filePath.substr(filePath.indexOf(path));
           filePath = filePath.slice(0, -assetString.length); // -6 for .asset
-          console.log("adding ", filePath);
           assets.push(filePath);
         }
       });
